@@ -1,0 +1,15 @@
+{
+  "material": {
+    "id": 553,
+    "sku": "RM-C30-vitamin-d3-cholecalciferol-559c9699",
+    "name": "Vitamin D3 Cholecalciferol",
+    "bom_count": 11
+  },
+  "suppliers": [
+    "Prinova USA",
+    "PureBulk"
+  ],
+  "companies": [
+    "Nature Made"
+  ]
+}
