@@ -414,28 +414,28 @@
       <div class="flex flex-col gap-4 xl:col-span-4">
         <div class="dashboard-glass rounded-[1.75rem] border border-white/10 p-6">
           <div class="flex items-center justify-between gap-3 mb-4">
-            <p class="text-[11px] font-semibold uppercase tracking-[0.28em] text-blue-200/80">Agnes Recommendation</p>
+            <p class="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/75">Agnes Recommendation</p>
             <button onclick="speakCurrentAgnesResponse()" class="w-10 h-10 rounded-full bg-white/10 text-white hover:bg-white/16 transition-colors" type="button">
               <span class="material-symbols-outlined text-[20px]">volume_up</span>
             </button>
           </div>
           <h3 id="agnes-response-title" class="font-headline text-2xl font-extrabold text-white leading-tight">Consolidate Vitamin D3 into one lead supplier lane.</h3>
-          <p id="agnes-response-body" class="text-sm text-blue-100/72 leading-relaxed mt-4">Agnes recommends moving fragmented Vitamin D3 sourcing toward one primary supplier so the ingredient is standardized before deeper formulation changes begin.</p>
+          <p id="agnes-response-body" class="text-sm text-white/90 leading-relaxed mt-4">Agnes recommends moving fragmented Vitamin D3 sourcing toward one primary supplier so the ingredient is standardized before deeper formulation changes begin.</p>
           <div id="agnes-response-chips" class="flex flex-wrap gap-2 mt-5"></div>
-          <p id="agnes-response-note" class="text-xs text-blue-100/52 leading-relaxed mt-4">Agnes stays grounded in the internal sourcing snapshot and keeps open checks visible.</p>
+          <p id="agnes-response-note" class="text-xs text-white/70 leading-relaxed mt-4">Agnes stays grounded in the internal sourcing snapshot and keeps open checks visible.</p>
         </div>
 
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div class="dashboard-glass rounded-[1.35rem] border border-white/10 p-4">
-            <p id="agnes-metric-a-label" class="text-[10px] uppercase tracking-[0.22em] text-blue-200/70 mb-2">Primary move</p>
+            <p id="agnes-metric-a-label" class="text-[10px] uppercase tracking-[0.22em] text-white/70 mb-2">Primary move</p>
             <p id="agnes-metric-a-value" class="font-headline text-lg font-bold text-white leading-tight">Consolidate</p>
           </div>
           <div class="dashboard-glass rounded-[1.35rem] border border-white/10 p-4">
-            <p id="agnes-metric-b-label" class="text-[10px] uppercase tracking-[0.22em] text-blue-200/70 mb-2">Lead node</p>
+            <p id="agnes-metric-b-label" class="text-[10px] uppercase tracking-[0.22em] text-white/70 mb-2">Lead node</p>
             <p id="agnes-metric-b-value" class="font-headline text-lg font-bold text-white leading-tight">Prinova USA</p>
           </div>
           <div class="dashboard-glass rounded-[1.35rem] border border-white/10 p-4">
-            <p id="agnes-metric-c-label" class="text-[10px] uppercase tracking-[0.22em] text-blue-200/70 mb-2">Exposure</p>
+            <p id="agnes-metric-c-label" class="text-[10px] uppercase tracking-[0.22em] text-white/70 mb-2">Exposure</p>
             <p id="agnes-metric-c-value" class="font-headline text-lg font-bold text-white leading-tight">11 BOMs</p>
           </div>
         </div>
@@ -1985,6 +1985,7 @@
       'If the answer would require external evidence, say that clearly.',
       'Keep the conversation open until the user explicitly asks to end it. Do not end the session on your own after greeting the user.',
       'When the session starts, greet the user briefly, then wait for their first sourcing question.',
+      'If the user asks whether you can hear them, whether the microphone works, or whether you are there, answer that directly in one short sentence, confirm the connection, and invite the sourcing question.',
       'When the user asks which suppliers sell a material like gelatin, inspect the relevant material clusters first and distinguish between generic gelatin and dosage-form-specific materials such as softgel capsule bovine gelatin.',
       'Keep answers short, operational, and trustworthy.',
       `Current focus material: ${focusMaterial}.`,
@@ -2005,6 +2006,7 @@
     return [
       'Silent context update for Agnes. Do not read this context aloud unless the user asks for it directly.',
       'Stay connected after your first greeting and wait for the user to speak or type their sourcing question.',
+      'If the user does a quick audio or presence check, confirm that you can hear them and ask for their sourcing question.',
       `Focus material: ${data.material?.name || 'unknown'}.`,
       `Lead supplier lane: ${preferred}. Backup supplier lane: ${backup}.`,
       `Affected scope: ${decision?.impact?.finished_goods || 0} finished goods, ${decision?.impact?.boms || 0} BOMs, ${decision?.impact?.companies || 0} companies.`,
@@ -2630,10 +2632,32 @@
         ];
 
     const requestedStepMatch = normalized.match(/\bstep\s*0?([1-9])\b/);
+    const asksForAudioCheck = /can you hear me|do you hear me|are you hearing me|can you hear us|do you hear us|am i audible|are you there|is this working|can you hear this|hello can you hear me/.test(normalized);
     const asksForReplacementMove = /what should we replace(?: next)?|what do we replace first|what should be replaced|replace next/.test(normalized);
     const asksForVitaminD3Lead = /who should lead vitamin d3|which supplier should lead vitamin d3|who leads vitamin d3|vitamin d3 lead/.test(normalized);
     const asksForBiggestBomRisk = /where is the biggest bom risk|what is the biggest bom risk|largest bom risk|broadest bom exposure/.test(normalized);
     const asksForStandardizationMove = /what should we standardize|which material should we standardize|what do we standardize first|standardize next/.test(normalized);
+
+    if (asksForAudioCheck) {
+      return {
+        title: 'Yes, I can hear you.',
+        body: 'Your message came through clearly. Ask your sourcing question and I will answer from the current internal snapshot.',
+        chips: [
+          'Voice check',
+          'Connection confirmed',
+          'Internal data',
+        ],
+        note: 'Agnes is ready for the next typed or spoken sourcing question.',
+        metrics: [
+          { label: 'Channel', value: 'Voice or text' },
+          { label: 'Status', value: 'Connected' },
+          { label: 'Mode', value: 'Ready' },
+        ],
+        actions: defaultActions,
+        actionQueue,
+        statusCopy: 'Agnes confirmed the connection and is ready for the next question.',
+      };
+    }
 
     if (asksForReplacementMove && actionQueue.length) {
       const selectedAction = actionQueue[0];
@@ -4484,7 +4508,6 @@
             <div class="space-y-2">
               ${preferredSupplier.rationale.map(reason => `<p class="text-xs text-on-surface-variant">${escapeHtml(reason)}</p>`).join('')}
             </div>
-            <p class="text-xs text-amber-700 mt-3">${escapeHtml(cluster.recommendation.open_gap)}</p>
           </div>
         `
       : '<p class="text-sm text-on-surface-variant">No recommendation available for this cluster yet.</p>';
