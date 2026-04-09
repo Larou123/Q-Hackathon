@@ -1779,7 +1779,7 @@
       kind: 'supplier',
       category: 'Suppliers',
       title: supplier.name,
-      meta: `${supplier.linked_products} linked products · ${supplier.products.filter(product => product.type === 'raw-material').length} raw materials`,
+      meta: `${supplier.raw_material_links} linked raw materials`,
       chips: [supplier.selected_material_supplier ? 'Supplies focus material' : null].filter(Boolean),
       supplierName: supplier.name,
     }));
@@ -2809,11 +2809,11 @@
       const rawMaterials = (matchedSupplier.products || []).filter(product => product.type === 'raw-material');
       const sampleNames = rawMaterials.slice(0, 3).map(product => product.name);
       return {
-        title: `${matchedSupplier.name} is linked to ${matchedSupplier.linked_products} products in the current snapshot.`,
+        title: `${matchedSupplier.name} is linked to ${matchedSupplier.raw_material_links} raw materials in the current snapshot.`,
         body: `${matchedSupplier.name} currently supplies ${rawMaterials.length} raw-material links in the internal dataset. Sample materials include ${sampleNames.length ? sampleNames.join(', ') : 'the supplier catalog currently loaded in Agnes'}.`,
         chips: [
           `${rawMaterials.length} raw materials`,
-          `${matchedSupplier.linked_products} linked products`,
+          `${matchedSupplier.raw_material_links} linked raw materials`,
           matchedSupplier.selected_material_supplier ? 'Focus-material supplier' : 'General supplier',
         ].filter(Boolean),
         note: matchedSupplier.selected_material_supplier
@@ -2822,7 +2822,7 @@
         metrics: [
           { label: 'Supplier', value: matchedSupplier.name },
           { label: 'Raw materials', value: String(rawMaterials.length) },
-          { label: 'Linked products', value: String(matchedSupplier.linked_products) },
+          { label: 'Linked raw materials', value: String(matchedSupplier.raw_material_links) },
         ],
         actions: [
           `Open ${matchedSupplier.name} and review the linked raw materials in detail.`,
@@ -4330,12 +4330,12 @@
             </div>
           </div>
         `).join('')
-      : '<p class="text-sm text-on-surface-variant">No linked products found for this supplier.</p>';
+      : '<p class="text-sm text-on-surface-variant">No linked raw materials found for this supplier.</p>';
 
     openDetailModal({
       kicker: 'Supplier Detail',
       title: supplier.name,
-      subtitle: `Supplier ID ${supplier.id} · linked product records from Supplier_Product`,
+      subtitle: `Supplier ID ${supplier.id} · linked raw-material records from Supplier_Product`,
       metaChips: [
         `${rawMaterialCount} raw materials`,
         supplier.selected_material_supplier ? 'Supplies focus material' : 'Registry supplier',
@@ -4684,7 +4684,7 @@
                 ${focusBadge}
                 <span class="${primaryChipClass} px-3 py-1 rounded-full text-xs font-semibold">${rawMaterialCount} raw materials</span>
               </div>
-              <button type="button" onclick="showSupplierProducts(${supplier.id})" class="text-xs text-primary font-semibold text-left hover:underline">Open ${supplier.linked_products} linked products</button>
+              <button type="button" onclick="showSupplierProducts(${supplier.id})" class="text-xs text-primary font-semibold text-left hover:underline">Open ${supplier.raw_material_links} linked raw materials</button>
             </div>
           `;
         }).join('');
