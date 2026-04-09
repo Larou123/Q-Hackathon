@@ -1802,67 +1802,36 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             })
             return
 
-        if parsed.path in {
-            '/api/elevenlabs/material-suppliers',
-            '/api/agnes/elevenlabs/material-suppliers',
-        }:
-            query = extract_tool_value({}, query_params, 'query', 'material', 'search')
-            payload = build_material_supplier_lookup_payload(get_cached_data(), query)
-            self.send_json(payload)
-            return
-
-        if parsed.path in {
-            '/api/elevenlabs/supplier-catalog',
-            '/api/agnes/elevenlabs/supplier-catalog',
-        }:
-            supplier_query = extract_tool_value({}, query_params, 'supplier_name', 'query', 'supplier')
-            payload = build_supplier_catalog_payload(get_cached_data(), supplier_query)
-            self.send_json(payload)
-            return
-
-        if parsed.path in {
-            '/api/elevenlabs/tts',
-            '/api/agnes/elevenlabs/tts',
-        }:
-            text = extract_tool_value({}, query_params, 'text')
-            language_code = extract_tool_value({}, query_params, 'language_code', 'language')
-            if not text:
-                self.send_json({'error': 'Missing text for TTS synthesis.'}, status=422)
-                return
-            try:
-                audio_bytes, content_type = synthesize_elevenlabs_speech(text, language_code or None)
-            except RuntimeError as exc:
-                self.send_json({'error': str(exc)}, status=502)
-                return
-            self.send_bytes(audio_bytes, content_type=content_type, status=200)
-            return
-
-        super().do_GET()
+        if not self._dispatch_shared_api(parsed.path, query_params, {}):
+            super().do_GET()
 
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
         query_params = urllib.parse.parse_qs(parsed.query)
         payload = self.read_json_body()
 
-        if parsed.path in {
+        if not self._dispatch_shared_api(parsed.path, query_params, payload):
+            self.send_json({'error': 'Unknown API endpoint.'}, status=404)
+
+    def _dispatch_shared_api(self, path, query_params, payload):
+        """Handle API routes shared between GET and POST. Returns True if handled."""
+        if path in {
             '/api/elevenlabs/material-suppliers',
             '/api/agnes/elevenlabs/material-suppliers',
         }:
             query = extract_tool_value(payload, query_params, 'query', 'material', 'search')
-            response = build_material_supplier_lookup_payload(get_cached_data(), query)
-            self.send_json(response)
-            return
+            self.send_json(build_material_supplier_lookup_payload(get_cached_data(), query))
+            return True
 
-        if parsed.path in {
+        if path in {
             '/api/elevenlabs/supplier-catalog',
             '/api/agnes/elevenlabs/supplier-catalog',
         }:
             supplier_query = extract_tool_value(payload, query_params, 'supplier_name', 'query', 'supplier')
-            response = build_supplier_catalog_payload(get_cached_data(), supplier_query)
-            self.send_json(response)
-            return
+            self.send_json(build_supplier_catalog_payload(get_cached_data(), supplier_query))
+            return True
 
-        if parsed.path in {
+        if path in {
             '/api/elevenlabs/tts',
             '/api/agnes/elevenlabs/tts',
         }:
@@ -1870,16 +1839,16 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             language_code = extract_tool_value(payload, query_params, 'language_code', 'language')
             if not text:
                 self.send_json({'error': 'Missing text for TTS synthesis.'}, status=422)
-                return
+                return True
             try:
                 audio_bytes, content_type = synthesize_elevenlabs_speech(text, language_code or None)
             except RuntimeError as exc:
                 self.send_json({'error': str(exc)}, status=502)
-                return
+                return True
             self.send_bytes(audio_bytes, content_type=content_type, status=200)
-            return
+            return True
 
-        self.send_json({'error': 'Unknown API endpoint.'}, status=404)
+        return False
 
 
 if __name__ == '__main__':
