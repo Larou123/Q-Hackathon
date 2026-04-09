@@ -1,0 +1,141 @@
+{
+  "version": 1,
+  "updated_at": "2026-04-08",
+  "pipeline_blueprint": {
+    "stages": [
+      "retrieval",
+      "extraction",
+      "audit",
+      "commercial",
+      "decision"
+    ],
+    "source_types": [
+      "supplier_website",
+      "product_page",
+      "spec_pdf",
+      "certificate_pdf",
+      "regulatory_reference",
+      "manual_upload",
+      "api_response"
+    ],
+    "status_legend": {
+      "queued": "Ready for ingestion",
+      "blocked": "Waiting on an upstream stage",
+      "in_progress": "Currently being processed",
+      "review": "Needs human or auditor review",
+      "verified": "Verified and usable in decisions",
+      "missing": "No evidence loaded yet"
+    }
+  },
+  "materials": {
+    "vitamind3cholecalciferol": {
+      "status": "scaffold_only",
+      "notes": "Groundwork for a future real evidence pipeline. This material entry is the cache boundary for scraper outputs, extracted fields, audit decisions, and commercial uploads.",
+      "review_questions": [
+        "Can each supplier prove the same Vitamin D3 identity and specification?",
+        "Do the affected finished goods need claim-specific checks beyond ingredient identity?",
+        "Which supplier has the strongest quality, compliance, and commercial package once evidence is loaded?"
+      ],
+      "suppliers": {
+        "Prinova USA": {
+          "priority": "primary",
+          "notes": "Seed the lead-lane evidence package here first.",
+          "stage_status": {
+            "retrieval": "queued",
+            "extraction": "blocked",
+            "audit": "blocked",
+            "commercial": "missing",
+            "decision": "blocked"
+          },
+          "source_queue": [
+            {
+              "type": "supplier_website",
+              "status": "queued",
+              "label": "Company and product landing pages",
+              "url": null
+            },
+            {
+              "type": "spec_pdf",
+              "status": "queued",
+              "label": "Vitamin D3 specification or COA PDF",
+              "url": null
+            },
+            {
+              "type": "certificate_pdf",
+              "status": "queued",
+              "label": "Certification / claim support package",
+              "url": null
+            },
+            {
+              "type": "manual_upload",
+              "status": "queued",
+              "label": "Commercial quote, MOQ, lead time, and service levels",
+              "url": null
+            }
+          ],
+          "claims_to_verify": [
+            "ingredient identity",
+            "quality / certification fit",
+            "claim fit for affected finished goods"
+          ],
+          "commercial_fields": [
+            "price",
+            "lead_time_days",
+            "moq",
+            "country_of_origin"
+          ],
+          "evidence_items": []
+        },
+        "PureBulk": {
+          "priority": "secondary",
+          "notes": "Use as the first backup-lane evidence package.",
+          "stage_status": {
+            "retrieval": "queued",
+            "extraction": "blocked",
+            "audit": "blocked",
+            "commercial": "missing",
+            "decision": "blocked"
+          },
+          "source_queue": [
+            {
+              "type": "supplier_website",
+              "status": "queued",
+              "label": "Company and product landing pages",
+              "url": null
+            },
+            {
+              "type": "spec_pdf",
+              "status": "queued",
+              "label": "Vitamin D3 specification or COA PDF",
+              "url": null
+            },
+            {
+              "type": "certificate_pdf",
+              "status": "queued",
+              "label": "Certification / claim support package",
+              "url": null
+            },
+            {
+              "type": "manual_upload",
+              "status": "queued",
+              "label": "Commercial quote, MOQ, lead time, and service levels",
+              "url": null
+            }
+          ],
+          "claims_to_verify": [
+            "ingredient identity",
+            "quality / certification fit",
+            "claim fit for affected finished goods"
+          ],
+          "commercial_fields": [
+            "price",
+            "lead_time_days",
+            "moq",
+            "country_of_origin"
+          ],
+          "evidence_items": []
+        }
+      }
+    }
+  }
+}
