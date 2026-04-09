@@ -12,7 +12,7 @@ import urllib.request
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'db.sqlite')
 EVIDENCE_STORE_PATH = os.path.join(BASE_DIR, 'evidence_store.json')
-PORT = 3000
+PORT = int(os.getenv('PORT', '3000'))
 ELEVENLABS_AGENT_ID = os.getenv('ELEVENLABS_AGENT_ID', '').strip()
 ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY', '').strip()
 ELEVENLABS_API_ORIGIN = os.getenv('ELEVENLABS_API_ORIGIN', 'https://api.elevenlabs.io').rstrip('/')
@@ -1860,6 +1860,14 @@ if __name__ == '__main__':
         json.dump(data, f)
     print(f'data.json written ({data["material"]["bom_count"]} BOMs, {len(data["suppliers"])} suppliers)')
 
-    with http.server.ThreadingHTTPServer(('', PORT), Handler) as httpd:
-        print(f'Agnes server running on http://localhost:{PORT}')
-        httpd.serve_forever()
+    try:
+        with http.server.ThreadingHTTPServer(('', PORT), Handler) as httpd:
+            print(f'Agnes server running on http://localhost:{PORT}')
+            httpd.serve_forever()
+    except OSError as exc:
+        if exc.errno == 48:
+            print(
+                f'Port {PORT} is already in use. '
+                f'Stop the existing process or start Agnes on another port, e.g. PORT={PORT + 1} python3 server.py'
+            )
+        raise
