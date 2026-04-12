@@ -274,6 +274,14 @@
       <span class="material-symbols-outlined text-[20px]">inventory_2</span>
       <span class="font-body text-sm uppercase tracking-wider">Products</span>
     </a>
+    <a class="nav-link flex items-center gap-3 py-3 px-4 text-slate-600 cursor-pointer transition-all" data-page="raw-materials">
+      <span class="material-symbols-outlined text-[20px]">science</span>
+      <span class="font-body text-sm uppercase tracking-wider">Raw Materials</span>
+    </a>
+    <a class="nav-link flex items-center gap-3 py-3 px-4 text-slate-600 cursor-pointer transition-all" data-page="attributes">
+      <span class="material-symbols-outlined text-[20px]">edit_note</span>
+      <span class="font-body text-sm uppercase tracking-wider">Attributes</span>
+    </a>
     <a class="nav-link flex items-center gap-3 py-3 px-4 text-slate-600 cursor-pointer transition-all" data-page="suppliers">
       <span class="material-symbols-outlined text-[20px]">factory</span>
       <span class="font-body text-sm uppercase tracking-wider">Suppliers</span>
@@ -333,6 +341,14 @@
     <a class="nav-link flex min-w-[9rem] items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition-all" data-page="products">
       <span class="material-symbols-outlined text-[18px]">inventory_2</span>
       <span>Products</span>
+    </a>
+    <a class="nav-link flex min-w-[11rem] items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition-all" data-page="raw-materials">
+      <span class="material-symbols-outlined text-[18px]">science</span>
+      <span>Raw Materials</span>
+    </a>
+    <a class="nav-link flex min-w-[9rem] items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition-all" data-page="attributes">
+      <span class="material-symbols-outlined text-[18px]">edit_note</span>
+      <span>Attributes</span>
     </a>
     <a class="nav-link flex min-w-[9rem] items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition-all" data-page="suppliers">
       <span class="material-symbols-outlined text-[18px]">factory</span>
@@ -1114,6 +1130,226 @@
 </div>
 
 <!-- ======================================================= -->
+<!-- RAW MATERIALS                                           -->
+<!-- ======================================================= -->
+<div id="page-raw-materials" class="page hidden p-8">
+  <div class="mb-7">
+    <p class="font-label text-xs font-semibold uppercase tracking-widest text-primary mb-1">RAW MATERIALS</p>
+    <h1 class="font-headline text-3xl font-extrabold tracking-tight">Raw-material attributes</h1>
+    <p id="raw-materials-subtitle" class="text-sm text-on-surface-variant mt-1">Live `raw_material_attributes` view from `db.sqlite`.</p>
+  </div>
+
+  <div class="grid grid-cols-4 gap-5 mb-6">
+    <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm">
+      <p class="text-xs text-on-surface-variant uppercase tracking-wider mb-2">Attribute Rows</p>
+      <p id="rm-kpi-total" class="font-headline text-2xl font-extrabold">876</p>
+      <p class="text-xs text-on-surface-variant mt-1">Rows from `raw_material_attributes`</p>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm">
+      <p class="text-xs text-on-surface-variant uppercase tracking-wider mb-2">With Material Group</p>
+      <p id="rm-kpi-multi" class="font-headline text-2xl font-extrabold">0</p>
+      <p class="text-xs text-on-surface-variant mt-1">Rows with a linked `rm_gooup_id`</p>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm">
+      <p class="text-xs text-on-surface-variant uppercase tracking-wider mb-2">Without Material Group</p>
+      <p id="rm-kpi-bom-avg" class="font-headline text-2xl font-extrabold">0</p>
+      <p class="text-xs text-on-surface-variant mt-1">Rows where `rm_gooup_id` is `NULL`</p>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm">
+      <p class="text-xs text-on-surface-variant uppercase tracking-wider mb-2">Companies</p>
+      <p id="rm-kpi-focus" class="font-headline text-2xl font-extrabold">0</p>
+      <p class="text-xs text-on-surface-variant mt-1">Distinct companies from `product_id`</p>
+    </div>
+  </div>
+
+  <div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm mb-6">
+    <h3 class="font-headline text-sm font-bold mb-1">Top companies in attribute rows</h3>
+    <p id="raw-material-company-count" class="text-xs text-on-surface-variant mb-4">Companies resolved through `product_id -> Product -> Company`.</p>
+    <div id="raw-material-company-chips" class="flex flex-wrap gap-2">
+      <span class="bg-blue-50 text-primary px-3 py-1 rounded-full text-xs font-semibold">Loading...</span>
+    </div>
+  </div>
+
+  <div class="bg-surface-container-low rounded-2xl overflow-hidden shadow-sm">
+    <div class="px-6 py-4 border-b border-slate-100 bg-surface-container-lowest">
+      <p class="font-headline text-sm font-bold">Full raw_material_attributes table</p>
+      <p class="text-xs text-on-surface-variant mt-0.5">Company is resolved through `product_id` from `Product` and `Company`.</p>
+    </div>
+    <div class="overflow-x-auto max-h-[38rem]">
+      <table class="w-full text-left">
+        <thead class="sticky top-0 bg-surface-container-low z-10">
+          <tr class="text-on-surface-variant">
+            <th class="px-6 py-4 font-label text-xs font-semibold uppercase tracking-wider">ID</th>
+            <th class="px-6 py-4 font-label text-xs font-semibold uppercase tracking-wider">Product ID</th>
+            <th class="px-6 py-4 font-label text-xs font-semibold uppercase tracking-wider">Company</th>
+            <th class="px-6 py-4 font-label text-xs font-semibold uppercase tracking-wider">Attribute Name</th>
+            <th class="px-6 py-4 font-label text-xs font-semibold uppercase tracking-wider">Material Group</th>
+            <th class="px-6 py-4 font-label text-xs font-semibold uppercase tracking-wider">Finished Products</th>
+            <th class="px-6 py-4 font-label text-xs font-semibold uppercase tracking-wider">Product SKU</th>
+            <th class="px-6 py-4 font-label text-xs font-semibold uppercase tracking-wider">Confidence</th>
+          </tr>
+        </thead>
+        <tbody id="raw-materials-table-body">
+          <tr class="border-t border-slate-100 bg-surface-container-lowest">
+            <td colspan="8" class="px-6 py-6 text-sm text-on-surface-variant">Loading raw-material attributes from `db.sqlite`...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- ATTRIBUTES                                              -->
+<!-- ======================================================= -->
+<div id="page-attributes" class="page hidden p-8">
+  <div class="mb-7">
+    <p class="font-label text-xs font-semibold uppercase tracking-widest text-primary mb-1">ATTRIBUTES</p>
+    <h1 class="font-headline text-3xl font-extrabold tracking-tight">Raw-material attribute editor</h1>
+    <p id="attributes-subtitle" class="text-sm text-on-surface-variant mt-1">Edit existing raw-material attributes and add new values directly into `db.sqlite`.</p>
+  </div>
+
+  <div id="attribute-editor-status" class="mb-6 rounded-xl border border-slate-200 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface-variant">
+    Select an attribute row to edit it or reuse its `product_id` and `material_group` for a new entry.
+  </div>
+
+  <div class="grid gap-6 xl:grid-cols-2 mb-6">
+    <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h3 class="font-headline text-lg font-extrabold">Edit selected attribute</h3>
+          <p id="attribute-selected-meta" class="text-xs text-on-surface-variant mt-1">No row selected yet.</p>
+        </div>
+        <button type="button" onclick="copyAttributeContextToCreateForm()" class="px-3 py-2 rounded-xl bg-blue-50 text-primary text-xs font-semibold hover:bg-blue-100 transition-colors">
+          Copy Context To New
+        </button>
+      </div>
+
+      <form onsubmit="submitAttributeUpdate(event)" class="grid gap-4 md:grid-cols-2">
+        <div>
+          <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Attribute ID</label>
+          <input id="attribute-edit-id" type="number" readonly class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm"/>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Product ID</label>
+          <input id="attribute-edit-product-id" type="number" readonly class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm"/>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Material Group</label>
+          <select id="attribute-edit-group-id" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"></select>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Attribute Name</label>
+          <input id="attribute-edit-name" type="text" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"/>
+        </div>
+        <div class="md:col-span-2">
+          <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Attribute Value</label>
+          <textarea id="attribute-edit-value" rows="3" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"></textarea>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Value Type</label>
+          <input id="attribute-edit-value-type" type="text" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" placeholder="text, number, boolean..."/>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Unit</label>
+          <input id="attribute-edit-unit" type="text" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" placeholder="mg, %, IU..."/>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Source</label>
+          <input id="attribute-edit-source" type="text" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" placeholder="manual, spec sheet, supplier..."/>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Confidence</label>
+          <input id="attribute-edit-confidence" type="number" step="0.01" min="0" max="1" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" placeholder="0.0 - 1.0"/>
+        </div>
+        <div class="md:col-span-2 flex justify-end">
+          <button type="submit" class="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity">
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm">
+      <div class="mb-4">
+        <h3 class="font-headline text-lg font-extrabold">Add new attribute entry</h3>
+        <p id="attribute-create-meta" class="text-xs text-on-surface-variant mt-1">A selected row can prefill `product_id` and `material_group` for a new entry.</p>
+      </div>
+
+      <form onsubmit="submitAttributeCreate(event)" class="grid gap-4 md:grid-cols-2">
+        <div>
+          <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Raw Material</label>
+          <select id="attribute-create-product-id" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"></select>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Material Group</label>
+          <select id="attribute-create-group-id" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"></select>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Attribute Name</label>
+          <input id="attribute-create-name" type="text" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" placeholder="purity, dosage, appearance..."/>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Attribute Value</label>
+          <input id="attribute-create-value" type="text" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" placeholder="Write the value here"/>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Value Type</label>
+          <input id="attribute-create-value-type" type="text" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"/>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Unit</label>
+          <input id="attribute-create-unit" type="text" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"/>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Source</label>
+          <input id="attribute-create-source" type="text" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"/>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Confidence</label>
+          <input id="attribute-create-confidence" type="number" step="0.01" min="0" max="1" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"/>
+        </div>
+        <div class="md:col-span-2 flex justify-between gap-3">
+          <button type="button" onclick="copyAttributeContextToCreateForm()" class="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-on-surface hover:bg-slate-50 transition-colors">
+            Reuse Selected Context
+          </button>
+          <button type="submit" class="px-4 py-2 rounded-xl bg-tertiary text-white text-sm font-semibold hover:opacity-90 transition-opacity">
+            Add Attribute
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="bg-surface-container-low rounded-2xl overflow-hidden shadow-sm">
+    <div class="px-6 py-4 border-b border-slate-100 bg-surface-container-lowest">
+      <p class="font-headline text-sm font-bold">Existing attribute rows</p>
+      <p class="text-xs text-on-surface-variant mt-0.5">Pick a row to edit it, or reuse its `product_id` and `material_group` in the form above.</p>
+    </div>
+    <div class="overflow-x-auto max-h-[34rem]">
+      <table class="w-full text-left">
+        <thead class="sticky top-0 bg-surface-container-low z-10">
+          <tr class="text-on-surface-variant">
+            <th class="px-6 py-4 font-label text-xs font-semibold uppercase tracking-wider">Edit</th>
+            <th class="px-6 py-4 font-label text-xs font-semibold uppercase tracking-wider">ID</th>
+            <th class="px-6 py-4 font-label text-xs font-semibold uppercase tracking-wider">Product ID</th>
+            <th class="px-6 py-4 font-label text-xs font-semibold uppercase tracking-wider">Company</th>
+            <th class="px-6 py-4 font-label text-xs font-semibold uppercase tracking-wider">Material Group</th>
+            <th class="px-6 py-4 font-label text-xs font-semibold uppercase tracking-wider">Attribute Name</th>
+            <th class="px-6 py-4 font-label text-xs font-semibold uppercase tracking-wider">Value</th>
+          </tr>
+        </thead>
+        <tbody id="attribute-editor-table-body">
+          <tr class="border-t border-slate-100 bg-surface-container-lowest">
+            <td colspan="7" class="px-6 py-6 text-sm text-on-surface-variant">Loading attributes from `db.sqlite`...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================= -->
 <!-- SUPPLIERS                                               -->
 <!-- ======================================================= -->
 <div id="page-suppliers" class="page hidden p-8">
@@ -1407,7 +1643,7 @@
         </div>
         <div>
           <p class="font-semibold text-on-surface mb-1">Navigation</p>
-          <p>Use the sidebar or top navigation to switch between <strong>Dashboard</strong>, <strong>Decisions</strong>, <strong>Products</strong>, and <strong>Suppliers</strong>.</p>
+          <p>Use the sidebar or top navigation to switch between <strong>Dashboard</strong>, <strong>Decisions</strong>, <strong>Products</strong>, <strong>Raw Materials</strong>, and <strong>Suppliers</strong>.</p>
         </div>
         <div>
           <p class="font-semibold text-on-surface mb-1">Voice</p>
@@ -1455,6 +1691,7 @@
 
   const appState = {
     data: null,
+    attributeEditorSelectedId: null,
     agnesRecognition: null,
     agnesListening: false,
     agnesSpeaking: false,
@@ -1527,6 +1764,8 @@
       dashboard: 'Dashboard',
       inventory: 'Decisions',
       products: 'Products',
+      'raw-materials': 'Raw Materials',
+      attributes: 'Attributes',
       suppliers: 'Suppliers',
       boms: 'BOMs',
       'finished-goods': 'Finished Goods',
@@ -1542,6 +1781,346 @@
       const panel = document.getElementById('agnes-panel');
       if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, onInventory ? 0 : 120);
+  }
+
+  function formatNumber(value) {
+    return typeof value === 'number' ? value.toLocaleString('en-US') : value;
+  }
+
+  function setAttributeEditorStatus(message, tone = 'neutral') {
+    const shell = document.getElementById('attribute-editor-status');
+    if (!shell) return;
+
+    const toneClasses = {
+      neutral: 'border-slate-200 bg-surface-container-lowest text-on-surface-variant',
+      success: 'border-green-200 bg-green-50 text-green-800',
+      error: 'border-red-200 bg-red-50 text-red-700',
+      info: 'border-blue-200 bg-blue-50 text-blue-800',
+    };
+
+    shell.className = `mb-6 rounded-xl border px-4 py-3 text-sm ${toneClasses[tone] || toneClasses.neutral}`;
+    shell.textContent = message;
+  }
+
+  function getAttributeEditorRows() {
+    return Array.isArray(appState.data?.raw_material_attributes) ? appState.data.raw_material_attributes : [];
+  }
+
+  function getAttributeEditorMaterialGroups() {
+    return Array.isArray(appState.data?.material_groups) ? appState.data.material_groups : [];
+  }
+
+  function getAttributeEditorRawMaterialProducts() {
+    return Array.isArray(appState.data?.raw_material_products) ? appState.data.raw_material_products : [];
+  }
+
+  function findAttributeEditorRow(rmAttributesId) {
+    const numericId = Number(rmAttributesId);
+    return getAttributeEditorRows().find(row => row.rm_attributes_id === numericId) || null;
+  }
+
+  function buildMaterialGroupOptions(selectedId) {
+    const selected = selectedId == null ? '' : String(selectedId);
+    const options = ['<option value="">Unassigned</option>'];
+    getAttributeEditorMaterialGroups().forEach(group => {
+      const isSelected = String(group.id) === selected ? 'selected' : '';
+      options.push(`<option value="${group.id}" ${isSelected}>${escapeHtml(group.name)}</option>`);
+    });
+    return options.join('');
+  }
+
+  function buildRawMaterialProductOptions(selectedId) {
+    const selected = selectedId == null ? '' : String(selectedId);
+    const options = ['<option value="">Select raw material</option>'];
+    getAttributeEditorRawMaterialProducts().forEach(product => {
+      const isSelected = String(product.product_id) === selected ? 'selected' : '';
+      const label = `${product.product_name} (#${product.product_id}) · ${product.product_sku}${product.company_name ? ' · ' + product.company_name : ''}`;
+      options.push(`<option value="${product.product_id}" ${isSelected}>${escapeHtml(label)}</option>`);
+    });
+    return options.join('');
+  }
+
+  function fillAttributeEditorEditForm(row) {
+    const editId = document.getElementById('attribute-edit-id');
+    const editProductId = document.getElementById('attribute-edit-product-id');
+    const editGroupId = document.getElementById('attribute-edit-group-id');
+    const editName = document.getElementById('attribute-edit-name');
+    const editValue = document.getElementById('attribute-edit-value');
+    const editValueType = document.getElementById('attribute-edit-value-type');
+    const editUnit = document.getElementById('attribute-edit-unit');
+    const editSource = document.getElementById('attribute-edit-source');
+    const editConfidence = document.getElementById('attribute-edit-confidence');
+    const selectedMeta = document.getElementById('attribute-selected-meta');
+
+    if (!editId || !editProductId || !editGroupId || !editName || !editValue || !editValueType || !editUnit || !editSource || !editConfidence) return;
+
+    editGroupId.innerHTML = buildMaterialGroupOptions(row?.rm_gooup_id);
+    if (!row) {
+      editId.value = '';
+      editProductId.value = '';
+      editName.value = '';
+      editValue.value = '';
+      editValueType.value = '';
+      editUnit.value = '';
+      editSource.value = '';
+      editConfidence.value = '';
+      if (selectedMeta) selectedMeta.textContent = 'No row selected yet.';
+      return;
+    }
+
+    editId.value = row.rm_attributes_id ?? '';
+    editProductId.value = row.product_id ?? '';
+    editName.value = row.attribute_name || '';
+    editValue.value = row.attribute_value || '';
+    editValueType.value = row.value_type || '';
+    editUnit.value = row.unit || '';
+    editSource.value = row.source || '';
+    editConfidence.value = row.confidence == null ? '' : row.confidence;
+    if (selectedMeta) {
+      selectedMeta.textContent = `Product #${row.product_id} · ${row.company_name || 'Unknown company'} · ${row.product_sku || 'No SKU'} · ${row.material_group_name || 'Unassigned group'}`;
+    }
+  }
+
+  function copyAttributeContextToCreateForm() {
+    const row = findAttributeEditorRow(appState.attributeEditorSelectedId);
+    const productId = document.getElementById('attribute-create-product-id');
+    const groupId = document.getElementById('attribute-create-group-id');
+    const meta = document.getElementById('attribute-create-meta');
+    if (!productId || !groupId) return;
+
+    productId.innerHTML = buildRawMaterialProductOptions(row?.product_id);
+    groupId.innerHTML = buildMaterialGroupOptions(row?.rm_gooup_id);
+    if (!row) {
+      if (meta) meta.textContent = 'No selected row available yet. Choose a raw material from the product list.';
+      return;
+    }
+
+    productId.value = row.product_id == null ? '' : String(row.product_id);
+    groupId.value = row.rm_gooup_id == null ? '' : String(row.rm_gooup_id);
+    if (meta) {
+      meta.textContent = `New attribute will reuse Product #${row.product_id} and ${row.material_group_name || 'Unassigned group'} from the selected row.`;
+    }
+  }
+
+  function selectAttributeEditorRow(rmAttributesId) {
+    appState.attributeEditorSelectedId = Number(rmAttributesId);
+    renderAttributeEditorPage(appState.data);
+    setAttributeEditorStatus('Selected attribute row loaded into the editor.', 'info');
+  }
+
+  function renderRawMaterialsPage(d) {
+    const el = id => document.getElementById(id);
+
+    if (el('raw-materials-subtitle') && Array.isArray(d.raw_material_attributes)) {
+      el('raw-materials-subtitle').textContent = d.raw_material_attributes.length + ' rows loaded from raw_material_attributes in db.sqlite.';
+    }
+
+    if (!Array.isArray(d.raw_material_attributes)) return;
+
+    const linkedGroupCount = d.raw_material_attributes.filter(item => item.has_material_group).length;
+    const unlinkedGroupCount = d.raw_material_attributes.filter(item => !item.has_material_group).length;
+    const companyCount = new Set(
+      d.raw_material_attributes
+        .map(item => item.company_name)
+        .filter(Boolean)
+    ).size;
+
+    if (el('rm-kpi-total')) el('rm-kpi-total').textContent = formatNumber(d.raw_material_attributes.length);
+    if (el('rm-kpi-multi')) el('rm-kpi-multi').textContent = formatNumber(linkedGroupCount);
+    if (el('rm-kpi-bom-avg')) el('rm-kpi-bom-avg').textContent = formatNumber(unlinkedGroupCount);
+    if (el('rm-kpi-focus')) el('rm-kpi-focus').textContent = formatNumber(companyCount);
+
+    const rawMaterialCompanyMap = new Map();
+    d.raw_material_attributes.forEach(item => {
+      if (!item.company_name) return;
+      rawMaterialCompanyMap.set(item.company_name, (rawMaterialCompanyMap.get(item.company_name) || 0) + 1);
+    });
+    const topRawMaterialCompanies = Array.from(rawMaterialCompanyMap.entries())
+      .map(([company_name, row_count]) => ({ company_name, row_count }))
+      .sort((left, right) => right.row_count - left.row_count || left.company_name.localeCompare(right.company_name))
+      .slice(0, 8);
+
+    if (el('raw-material-company-count')) {
+      el('raw-material-company-count').textContent = rawMaterialCompanyMap.size + ' companies resolved through Product -> Company.';
+    }
+    if (el('raw-material-company-chips')) {
+      el('raw-material-company-chips').innerHTML = topRawMaterialCompanies.map(company => `
+        <span class="bg-blue-50 text-primary px-3 py-1 rounded-full text-xs font-semibold">${escapeHtml(company.company_name)} Â· ${company.row_count} rows</span>
+      `).join('');
+    }
+
+    if (el('raw-materials-table-body')) {
+      el('raw-materials-table-body').innerHTML = d.raw_material_attributes.map(attributeRow => {
+        const rowClass = attributeRow.is_focus_material ? 'bg-blue-50/40' : 'bg-surface-container-lowest';
+        const materialGroupText = attributeRow.material_group_name
+          ? escapeHtml(attributeRow.material_group_name)
+          : '<span class="text-slate-400">Unassigned</span>';
+        const confidenceText = attributeRow.confidence == null ? '-' : escapeHtml(String(attributeRow.confidence));
+        const finishedGoods = Array.isArray(attributeRow.finished_goods) ? attributeRow.finished_goods : [];
+        const finishedGoodsText = finishedGoods.length
+          ? `
+              <div class="flex flex-col gap-1">
+                <p class="text-xs font-semibold text-on-surface">${finishedGoods.length} linked</p>
+                <p class="text-xs text-on-surface-variant leading-relaxed">${escapeHtml(finishedGoods.slice(0, 3).map(item => item.product_sku + ' (#' + item.product_id + ')').join(', '))}</p>
+              </div>
+            `
+          : '<span class="text-slate-400 text-xs">No BOM usage</span>';
+
+        return `
+          <tr class="border-t border-slate-100 ${rowClass}">
+            <td class="px-6 py-4 text-sm">${attributeRow.rm_attributes_id}</td>
+            <td class="px-6 py-4 text-sm">${attributeRow.product_id}</td>
+            <td class="px-6 py-4 text-sm font-semibold">${escapeHtml(attributeRow.company_name || '-')}</td>
+            <td class="px-6 py-4">
+              <p class="text-sm font-semibold text-primary">${escapeHtml(attributeRow.attribute_name || '-')}</p>
+            </td>
+            <td class="px-6 py-4 text-sm">${materialGroupText}</td>
+            <td class="px-6 py-4">${finishedGoodsText}</td>
+            <td class="px-6 py-4">
+              <p class="text-xs text-on-surface-variant font-mono">${escapeHtml(attributeRow.product_sku || '-')}</p>
+            </td>
+            <td class="px-6 py-4 text-xs text-on-surface-variant">${confidenceText}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
+
+  function renderAttributeEditorPage(d) {
+    const rows = Array.isArray(d?.raw_material_attributes) ? d.raw_material_attributes : [];
+    const tableBody = document.getElementById('attribute-editor-table-body');
+    const subtitle = document.getElementById('attributes-subtitle');
+    const createGroup = document.getElementById('attribute-create-group-id');
+    const createProduct = document.getElementById('attribute-create-product-id');
+    if (subtitle) {
+      subtitle.textContent = rows.length + ' attribute rows live from db.sqlite. Edit values or add a new row with the same product/group context.';
+    }
+
+    if (createGroup) createGroup.innerHTML = buildMaterialGroupOptions(null);
+    if (createProduct) createProduct.innerHTML = buildRawMaterialProductOptions(null);
+
+    if (!rows.length) {
+      if (tableBody) {
+        tableBody.innerHTML = `
+          <tr class="border-t border-slate-100 bg-surface-container-lowest">
+            <td colspan="7" class="px-6 py-6 text-sm text-on-surface-variant">No raw-material attributes found.</td>
+          </tr>
+        `;
+      }
+      fillAttributeEditorEditForm(null);
+      return;
+    }
+
+    if (!findAttributeEditorRow(appState.attributeEditorSelectedId)) {
+      appState.attributeEditorSelectedId = rows[0].rm_attributes_id;
+    }
+
+    const selectedRow = findAttributeEditorRow(appState.attributeEditorSelectedId);
+    fillAttributeEditorEditForm(selectedRow);
+    copyAttributeContextToCreateForm();
+
+    if (tableBody) {
+      tableBody.innerHTML = rows.map(row => {
+        const isSelected = row.rm_attributes_id === appState.attributeEditorSelectedId;
+        const rowClass = isSelected ? 'bg-blue-50/50' : 'bg-surface-container-lowest';
+        return `
+          <tr class="border-t border-slate-100 ${rowClass}">
+            <td class="px-6 py-4 text-sm">
+              <button type="button" onclick="selectAttributeEditorRow(${row.rm_attributes_id})" class="px-3 py-1.5 rounded-lg ${isSelected ? 'bg-primary text-white' : 'bg-slate-100 text-slate-700'} text-xs font-semibold hover:opacity-90 transition-opacity">
+                ${isSelected ? 'Selected' : 'Edit'}
+              </button>
+            </td>
+            <td class="px-6 py-4 text-sm">${row.rm_attributes_id}</td>
+            <td class="px-6 py-4 text-sm">${row.product_id}</td>
+            <td class="px-6 py-4 text-sm font-semibold">${escapeHtml(row.company_name || '-')}</td>
+            <td class="px-6 py-4 text-sm">${row.material_group_name ? escapeHtml(row.material_group_name) : '<span class="text-slate-400">Unassigned</span>'}</td>
+            <td class="px-6 py-4 text-sm font-semibold text-primary">${escapeHtml(row.attribute_name || '-')}</td>
+            <td class="px-6 py-4 text-sm text-on-surface-variant">${escapeHtml(row.attribute_value || '-')}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
+
+  async function refreshAttributeEditorData(selectedId = null) {
+    const response = await fetch('/api/data');
+    if (!response.ok) {
+      throw new Error('Could not refresh live data.');
+    }
+    const data = await response.json();
+    appState.data = data;
+    if (selectedId != null) {
+      appState.attributeEditorSelectedId = Number(selectedId);
+    }
+    renderRawMaterialsPage(data);
+    renderAttributeEditorPage(data);
+  }
+
+  async function submitAttributeUpdate(event) {
+    event.preventDefault();
+
+    const payload = {
+      rm_attributes_id: document.getElementById('attribute-edit-id')?.value,
+      product_id: document.getElementById('attribute-edit-product-id')?.value,
+      rm_gooup_id: document.getElementById('attribute-edit-group-id')?.value,
+      attribute_name: document.getElementById('attribute-edit-name')?.value,
+      attribute_value: document.getElementById('attribute-edit-value')?.value,
+      value_type: document.getElementById('attribute-edit-value-type')?.value,
+      unit: document.getElementById('attribute-edit-unit')?.value,
+      source: document.getElementById('attribute-edit-source')?.value,
+      confidence: document.getElementById('attribute-edit-confidence')?.value,
+    };
+
+    try {
+      const response = await fetch('/api/raw-material-attributes/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result?.error || 'Update failed.');
+      await refreshAttributeEditorData(payload.rm_attributes_id);
+      setAttributeEditorStatus('Attribute row updated in db.sqlite.', 'success');
+    } catch (error) {
+      setAttributeEditorStatus(error.message || 'Could not update attribute row.', 'error');
+    }
+  }
+
+  async function submitAttributeCreate(event) {
+    event.preventDefault();
+
+    const payload = {
+      product_id: document.getElementById('attribute-create-product-id')?.value,
+      rm_gooup_id: document.getElementById('attribute-create-group-id')?.value,
+      attribute_name: document.getElementById('attribute-create-name')?.value,
+      attribute_value: document.getElementById('attribute-create-value')?.value,
+      value_type: document.getElementById('attribute-create-value-type')?.value,
+      unit: document.getElementById('attribute-create-unit')?.value,
+      source: document.getElementById('attribute-create-source')?.value,
+      confidence: document.getElementById('attribute-create-confidence')?.value,
+    };
+
+    try {
+      const response = await fetch('/api/raw-material-attributes/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result?.error || 'Create failed.');
+
+      document.getElementById('attribute-create-name').value = '';
+      document.getElementById('attribute-create-value').value = '';
+      document.getElementById('attribute-create-value-type').value = '';
+      document.getElementById('attribute-create-unit').value = '';
+      document.getElementById('attribute-create-source').value = '';
+      document.getElementById('attribute-create-confidence').value = '';
+
+      await refreshAttributeEditorData(result.rm_attributes_id);
+      setAttributeEditorStatus('New attribute row inserted into db.sqlite.', 'success');
+    } catch (error) {
+      setAttributeEditorStatus(error.message || 'Could not create attribute row.', 'error');
+    }
   }
 
   function setAgnesStatus(badge, copy) {
@@ -4588,9 +5167,14 @@
   initializeHeaderSearch();
   navigate('dashboard');
 
-  // Load real data from db.sqlite (written to data.json at server startup)
-  fetch('/data.json')
-    .then(r => r.json())
+  // Load live data directly from db.sqlite through the local API
+  fetch('/api/data')
+    .then(r => {
+      if (!r.ok) {
+        throw new Error('API request failed with status ' + r.status);
+      }
+      return r.json();
+    })
     .then(d => {
       appState.data = d;
       const overview = d.overview || {};
@@ -4913,6 +5497,82 @@
         }).join('');
       }
 
+      if (el('raw-materials-subtitle') && Array.isArray(d.raw_material_attributes)) {
+        el('raw-materials-subtitle').textContent = d.raw_material_attributes.length + ' rows loaded from raw_material_attributes in db.sqlite.';
+      }
+
+      if (Array.isArray(d.raw_material_attributes)) {
+        const linkedGroupCount = d.raw_material_attributes.filter(item => item.has_material_group).length;
+        const unlinkedGroupCount = d.raw_material_attributes.filter(item => !item.has_material_group).length;
+        const companyCount = new Set(
+          d.raw_material_attributes
+            .map(item => item.company_name)
+            .filter(Boolean)
+        ).size;
+
+        if (el('rm-kpi-total')) el('rm-kpi-total').textContent = fmt(d.raw_material_attributes.length);
+        if (el('rm-kpi-multi')) el('rm-kpi-multi').textContent = fmt(linkedGroupCount);
+        if (el('rm-kpi-bom-avg')) el('rm-kpi-bom-avg').textContent = fmt(unlinkedGroupCount);
+        if (el('rm-kpi-focus')) el('rm-kpi-focus').textContent = fmt(companyCount);
+
+        const rawMaterialCompanyMap = new Map();
+        d.raw_material_attributes.forEach(item => {
+          if (!item.company_name) return;
+          rawMaterialCompanyMap.set(item.company_name, (rawMaterialCompanyMap.get(item.company_name) || 0) + 1);
+        });
+        const topRawMaterialCompanies = Array.from(rawMaterialCompanyMap.entries())
+          .map(([company_name, row_count]) => ({ company_name, row_count }))
+          .sort((left, right) => right.row_count - left.row_count || left.company_name.localeCompare(right.company_name))
+          .slice(0, 8);
+
+        if (el('raw-material-company-count')) {
+          el('raw-material-company-count').textContent = rawMaterialCompanyMap.size + ' companies resolved through Product -> Company.';
+        }
+        if (el('raw-material-company-chips')) {
+          el('raw-material-company-chips').innerHTML = topRawMaterialCompanies.map(company => `
+            <span class="bg-blue-50 text-primary px-3 py-1 rounded-full text-xs font-semibold">${escapeHtml(company.company_name)} · ${company.row_count} rows</span>
+          `).join('');
+        }
+
+        if (el('raw-materials-table-body')) {
+          el('raw-materials-table-body').innerHTML = d.raw_material_attributes.map(attributeRow => {
+            const rowClass = attributeRow.is_focus_material ? 'bg-blue-50/40' : 'bg-surface-container-lowest';
+            const materialGroupText = attributeRow.material_group_name
+              ? escapeHtml(attributeRow.material_group_name)
+              : '<span class="text-slate-400">Unassigned</span>';
+            const confidenceText = attributeRow.confidence == null ? '-' : escapeHtml(String(attributeRow.confidence));
+            const finishedGoods = Array.isArray(attributeRow.finished_goods) ? attributeRow.finished_goods : [];
+            const finishedGoodsText = finishedGoods.length
+              ? `
+                  <div class="flex flex-col gap-1">
+                    <p class="text-xs font-semibold text-on-surface">${finishedGoods.length} linked</p>
+                    <p class="text-xs text-on-surface-variant leading-relaxed">${escapeHtml(finishedGoods.slice(0, 3).map(item => item.product_sku + ' (#' + item.product_id + ')').join(', '))}</p>
+                  </div>
+                `
+              : '<span class="text-slate-400 text-xs">No BOM usage</span>';
+
+            return `
+              <tr class="border-t border-slate-100 ${rowClass}">
+                <td class="px-6 py-4 text-sm">${attributeRow.rm_attributes_id}</td>
+                <td class="px-6 py-4 text-sm">${attributeRow.product_id}</td>
+                <td class="px-6 py-4 text-sm font-semibold">${escapeHtml(attributeRow.company_name || '-')}</td>
+                <td class="px-6 py-4">
+                  <p class="text-sm font-semibold text-primary">${escapeHtml(attributeRow.attribute_name || '-')}</p>
+                </td>
+                <td class="px-6 py-4 text-sm">${materialGroupText}</td>
+                <td class="px-6 py-4">${finishedGoodsText}</td>
+                <td class="px-6 py-4">
+                  <p class="text-xs text-on-surface-variant font-mono">${escapeHtml(attributeRow.product_sku || '-')}</p>
+                </td>
+                <td class="px-6 py-4 text-xs text-on-surface-variant">${confidenceText}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+      }
+
+      renderAttributeEditorPage(d);
+
       if (el('standardization-subtitle') && Array.isArray(d.material_clusters) && d.standardization_insights) {
         el('standardization-subtitle').textContent = d.material_clusters.length + ' candidate clusters loaded from db.sqlite. ' + d.standardization_insights.high_confidence_clusters + ' are high confidence and ' + d.standardization_insights.review_clusters + ' need procurement review.';
       }
@@ -5003,7 +5663,23 @@
       });
       askAgnesPrompt('What should we replace next?', { populateInput: false, forceLocal: true });
     })
-    .catch(() => {}); // mock data stays if API unavailable
+    .catch(error => {
+      console.error('Failed to load live sourcing data from /api/data', error);
+      const rawMaterialsTableBody = document.getElementById('raw-materials-table-body');
+      if (rawMaterialsTableBody) {
+        rawMaterialsTableBody.innerHTML = `
+          <tr class="border-t border-slate-100 bg-surface-container-lowest">
+            <td colspan="8" class="px-6 py-6 text-sm text-error">
+              Live data from db.sqlite could not be loaded. Start the app with \`python server.py\` and open \`http://localhost:3000\`.
+            </td>
+          </tr>
+        `;
+      }
+      const rawMaterialsSubtitle = document.getElementById('raw-materials-subtitle');
+      if (rawMaterialsSubtitle) {
+        rawMaterialsSubtitle.textContent = 'Live connection to db.sqlite failed.';
+      }
+    });
 </script>
 </body>
 </html>

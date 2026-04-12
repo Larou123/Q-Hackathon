@@ -1096,6 +1096,7 @@ def query_sourcing_data():
     material_id = row['Id']
     material_sku = row['SKU']
     bom_count = row['bom_count']
+    readable_name = humanize_product_name(material_sku, 'raw-material')
 
     # Suppliers for this material
     cur.execute("""
@@ -1423,6 +1424,125 @@ def query_sourcing_data():
             raw_material['companies'].add(bom['company_name'])
             raw_material['finished_goods'][bom['product_id']] = finished_good_ref
 
+    all_raw_materials = []
+    for raw_material in raw_material_records.values():
+        all_raw_materials.append({
+            'id': raw_material['id'],
+            'sku': raw_material['sku'],
+            'name': raw_material['name'],
+            'supplier_names': sorted(raw_material['suppliers']),
+            'supplier_count': len(raw_material['suppliers']),
+            'bom_count': len(raw_material['bom_ids']),
+            'company_count': len(raw_material['companies']),
+            'company_names': sorted(raw_material['companies']),
+            'finished_good_count': len(raw_material['finished_goods']),
+            'is_focus_material': raw_material['is_focus_material'],
+        })
+    all_raw_materials.sort(
+        key=lambda item: (
+            -item['bom_count'],
+            -item['supplier_count'],
+            item['name'],
+            item['sku'],
+        )
+    )
+
+    cur.execute("""
+        SELECT
+            bc.ConsumedProductId AS raw_material_product_id,
+            b.ProducedProductId AS finished_product_id,
+            fg.SKU AS finished_product_sku,
+            fc.Name AS finished_product_company_name,
+            b.Id AS bom_id
+        FROM BOM_Component bc
+        JOIN BOM b ON b.Id = bc.BOMId
+        JOIN Product fg ON fg.Id = b.ProducedProductId
+        JOIN Company fc ON fc.Id = fg.CompanyId
+        WHERE fg.Type = 'finished-good'
+        ORDER BY bc.ConsumedProductId, fg.SKU
+    """)
+    raw_material_finished_goods_lookup = {}
+    for row in cur.fetchall():
+        raw_material_finished_goods_lookup.setdefault(row['raw_material_product_id'], []).append({
+            'product_id': row['finished_product_id'],
+            'product_sku': row['finished_product_sku'],
+            'company_name': row['finished_product_company_name'],
+            'bom_id': row['bom_id'],
+        })
+
+    cur.execute("""
+        SELECT
+            r.rm_attributes_id,
+            r.rm_gooup_id,
+            r.product_id,
+            r.attribute_name,
+            r.attribute_value,
+            r.value_type,
+            r.unit,
+            r.source,
+            r.confidence,
+            p.SKU AS product_sku,
+            c.Name AS company_name,
+            m.name AS material_group_name
+        FROM raw_material_attributes r
+        LEFT JOIN Product p ON p.Id = r.product_id
+        LEFT JOIN Company c ON c.Id = p.CompanyId
+        LEFT JOIN material_groups m ON m.id = r.rm_gooup_id
+        ORDER BY r.attribute_name, c.Name, r.product_id
+    """)
+    raw_material_attributes = []
+    for row in cur.fetchall():
+        linked_finished_goods = raw_material_finished_goods_lookup.get(row['product_id'], [])
+        raw_material_attributes.append({
+            'rm_attributes_id': row['rm_attributes_id'],
+            'rm_gooup_id': row['rm_gooup_id'],
+            'product_id': row['product_id'],
+            'product_sku': row['product_sku'],
+            'company_name': row['company_name'],
+            'attribute_name': row['attribute_name'],
+            'attribute_value': row['attribute_value'],
+            'value_type': row['value_type'],
+            'unit': row['unit'],
+            'source': row['source'],
+            'confidence': row['confidence'],
+            'material_group_name': row['material_group_name'],
+            'has_material_group': row['rm_gooup_id'] is not None,
+            'is_focus_material': strict_material_key(row['attribute_name'] or '') == strict_material_key(readable_name),
+            'finished_good_count': len(linked_finished_goods),
+            'finished_goods': linked_finished_goods,
+        })
+
+    cur.execute("""
+        SELECT id, name
+        FROM material_groups
+        ORDER BY name
+    """)
+    material_groups = []
+    for row in cur.fetchall():
+        material_groups.append({
+            'id': row['id'],
+            'name': row['name'],
+        })
+
+    cur.execute("""
+        SELECT
+            p.Id AS product_id,
+            p.SKU,
+            c.Name AS company_name
+        FROM Product p
+        LEFT JOIN Company c ON c.Id = p.CompanyId
+        WHERE p.Type = 'raw-material'
+        ORDER BY p.SKU
+    """)
+    raw_material_products = []
+    for row in cur.fetchall():
+        raw_material_products.append({
+            'product_id': row['product_id'],
+            'product_sku': row['SKU'],
+            'product_name': humanize_product_name(row['SKU'], 'raw-material'),
+            'company_name': row['company_name'],
+        })
+
     material_cluster_lookup = {}
     for raw_material in raw_material_records.values():
         strict_key = strict_material_key(raw_material['name'])
@@ -1652,7 +1772,6 @@ def query_sourcing_data():
 
     conn.close()
 
-    readable_name = humanize_product_name(material_sku, 'raw-material')
     sourcing_decision = build_sourcing_decision_payload(
         readable_name,
         material_sku,
@@ -1684,6 +1803,10 @@ def query_sourcing_data():
         'finished_good_insights': finished_good_insights,
         'top_finished_good_companies': top_finished_good_companies,
         'finished_goods': finished_goods,
+        'all_raw_materials': all_raw_materials,
+        'raw_material_attributes': raw_material_attributes,
+        'material_groups': material_groups,
+        'raw_material_products': raw_material_products,
         'standardization_insights': standardization_insights,
         'material_clusters': material_clusters,
         'top_raw_materials': top_raw_materials,
@@ -1694,6 +1817,148 @@ def query_sourcing_data():
             'updated_at': evidence_store.get('updated_at'),
         },
     }
+
+
+def invalidate_cached_data():
+    global DATA_CACHE
+    with _CACHE_LOCK:
+        DATA_CACHE = None
+
+
+def normalize_optional_text(value):
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def parse_required_int(value, field_name):
+    try:
+        return int(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f'Missing or invalid {field_name}.') from exc
+
+
+def parse_optional_int(value, field_name):
+    if value in (None, '', 'null'):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f'Invalid {field_name}.') from exc
+
+
+def parse_optional_float(value, field_name):
+    if value in (None, '', 'null'):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f'Invalid {field_name}.') from exc
+
+
+def update_raw_material_attribute(payload):
+    rm_attributes_id = parse_required_int(payload.get('rm_attributes_id'), 'rm_attributes_id')
+    rm_gooup_id = parse_optional_int(payload.get('rm_gooup_id'), 'rm_gooup_id')
+    attribute_name = normalize_optional_text(payload.get('attribute_name'))
+    if not attribute_name:
+        raise ValueError('attribute_name is required.')
+
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT product_id FROM raw_material_attributes WHERE rm_attributes_id = ?", (rm_attributes_id,))
+        existing_row = cur.fetchone()
+        if existing_row is None:
+            raise ValueError('rm_attributes_id does not exist.')
+        product_id = existing_row[0]
+
+        if rm_gooup_id is not None:
+            cur.execute("SELECT 1 FROM material_groups WHERE id = ?", (rm_gooup_id,))
+            if cur.fetchone() is None:
+                raise ValueError('rm_gooup_id does not exist.')
+
+        cur.execute("""
+            UPDATE raw_material_attributes
+            SET
+                rm_gooup_id = ?,
+                attribute_name = ?,
+                attribute_value = ?,
+                value_type = ?,
+                unit = ?,
+                source = ?,
+                confidence = ?
+            WHERE rm_attributes_id = ?
+        """, (
+            rm_gooup_id,
+            attribute_name,
+            normalize_optional_text(payload.get('attribute_value')),
+            normalize_optional_text(payload.get('value_type')),
+            normalize_optional_text(payload.get('unit')),
+            normalize_optional_text(payload.get('source')),
+            parse_optional_float(payload.get('confidence'), 'confidence'),
+            rm_attributes_id,
+        ))
+        if cur.rowcount == 0:
+            raise ValueError('rm_attributes_id does not exist.')
+        conn.commit()
+    finally:
+        conn.close()
+
+    invalidate_cached_data()
+    return {'ok': True, 'rm_attributes_id': rm_attributes_id}
+
+
+def create_raw_material_attribute(payload):
+    product_id = parse_required_int(payload.get('product_id'), 'product_id')
+    rm_gooup_id = parse_optional_int(payload.get('rm_gooup_id'), 'rm_gooup_id')
+    attribute_name = normalize_optional_text(payload.get('attribute_name'))
+    if not attribute_name:
+        raise ValueError('attribute_name is required.')
+
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT Type FROM Product WHERE Id = ?", (product_id,))
+        product_row = cur.fetchone()
+        if product_row is None:
+            raise ValueError('product_id does not exist.')
+        if product_row[0] != 'raw-material':
+            raise ValueError('product_id must point to a raw-material product.')
+
+        if rm_gooup_id is not None:
+            cur.execute("SELECT 1 FROM material_groups WHERE id = ?", (rm_gooup_id,))
+            if cur.fetchone() is None:
+                raise ValueError('rm_gooup_id does not exist.')
+
+        cur.execute("""
+            INSERT INTO raw_material_attributes (
+                rm_gooup_id,
+                product_id,
+                attribute_name,
+                attribute_value,
+                value_type,
+                unit,
+                source,
+                confidence
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            rm_gooup_id,
+            product_id,
+            attribute_name,
+            normalize_optional_text(payload.get('attribute_value')),
+            normalize_optional_text(payload.get('value_type')),
+            normalize_optional_text(payload.get('unit')),
+            normalize_optional_text(payload.get('source')),
+            parse_optional_float(payload.get('confidence'), 'confidence'),
+        ))
+        new_id = cur.lastrowid
+        conn.commit()
+    finally:
+        conn.close()
+
+    invalidate_cached_data()
+    return {'ok': True, 'rm_attributes_id': new_id}
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
@@ -1755,6 +2020,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         query_params = urllib.parse.parse_qs(parsed.query)
 
+        if parsed.path == '/api/data':
+            self.send_json(query_sourcing_data())
+            return
+
         if parsed.path == '/api/agnes/voice-config':
             enabled = bool(ELEVENLABS_AGENT_ID)
             mode = 'private' if ELEVENLABS_API_KEY else ('public' if enabled else 'disabled')
@@ -1815,6 +2084,20 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
     def _dispatch_shared_api(self, path, query_params, payload):
         """Handle API routes shared between GET and POST. Returns True if handled."""
+        if path == '/api/raw-material-attributes/update':
+            try:
+                self.send_json(update_raw_material_attribute(payload))
+            except ValueError as exc:
+                self.send_json({'error': str(exc)}, status=422)
+            return True
+
+        if path == '/api/raw-material-attributes/create':
+            try:
+                self.send_json(create_raw_material_attribute(payload))
+            except ValueError as exc:
+                self.send_json({'error': str(exc)}, status=422)
+            return True
+
         if path in {
             '/api/elevenlabs/material-suppliers',
             '/api/agnes/elevenlabs/material-suppliers',
